@@ -1,0 +1,223 @@
+---
+title: "Lab 1: Basic R syntax/plots with data solutions"
+author: "Ryan Yancey (ryancey3)"
+output:
+  pdf_document:
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev='cairo_pdf', fig.align = 'center')
+```
+
+------------------------------------------------------------------------
+
+### For this lab, we will be using some basic data manipulation and plotting commands in R. We are working with a data set that is comparing the transcript profiles from peripheral B lymphocytes between patients with systemic lupus erythematosus (SLE) and normal healthy controls. The [GEO summary](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE30153) of the data set is as follows:
+
+> Systemic lupus erythematosus (SLE) is an autoimmune disease with an important clinical and biological heterogeneity. B lymphocytes appear central to the development of SLE which is characterized by the production of a large variety of autoantibodies and hypergammaglobulinemia. In mice, immature B cells from spontaneous lupus prone animals are able to produce autoantibodies when transferred into immunodeficient mice, strongly suggesting the existence of intrinsic B cell defects during lupus. In order to approach these defects in humans, we compared the peripheral B cell transcriptomes of quiescent lupus patients to normal B cell transcriptomes.
+
+------------------------------------------------------------------------
+
+####  1) Go to class website under Course Documents \> Data Sets and download the SLE B cell data set (from Garaud et al).\
+\
+Done. Downloaded data set as **sle_b\_cell.7z** in my working directory.
+
+#### 2) Unzip the text file, and read into R (Hint: using the `read.table()` function with a `header = T` argument and `row.names = 1` argument is one method to do this).\
+\
+After downloading the file, we'll look at my directory to see what files are available to work with.
+
+```{r dir structure}
+dir()
+```
+
+We're interested in working with **sle_b\_cell.7z** but we need to extract its contents first. We can do this by using the 7zip extractor, [p7zip](https://github.com/jinfeihan57/p7zip). I'm on a UNIX system, so I'll run the command in R as I would in my terminal, but modified to work within R.
+
+```{r extract 7z}
+# decompress sle_b_cell.7z
+system(command = "7z -y e sle_b_cell.7z")
+
+# view the new file in directory
+dir()
+```
+
+\newpage
+
+Now, we can import **sle_b\_cell.txt** into our environment.
+
+```{r import data}
+# read data into R
+garaud <- read.table(file = "sle_b_cell.txt",
+                  header = TRUE,
+                  row.names = 1)
+
+# view the first few rows to preview data
+head(x = garaud)
+```
+
+Each row appears to be a probeset in the microarray, and each column appears to be a sample from the experiment.
+
+\newpage
+
+#### 3) Look at the dimensions of the data There should be 26 samples. If you have 27 samples, you still have the row names in the first data column, so retry 2 to set the row names to these.
+\
+```{r number 3}
+# view number of rows (probesets), columns (samples)
+dim(garaud)
+```
+
+There's 34,853 probesets and 26 samples.\
+
+#### 4) Print the sample names to screen.
+\
+```{r number 4}
+# samples are columns so we will view those
+colnames(garaud)
+```
+
+Of the 26 samples, the first 17 are SLE samples, and the remaining 9 are control samples
+
+\newpage
+
+#### 5) Plot the second SLE patient sample versus the first normal control samples in an xy scatter plot. Remember that the first argument is the x vector. Label the x and y-axes as 'Normal' and 'SLE', respectively. Title the plot, 'SLE B cell sample vs. Normal B cell sample -- all probesets'. Add grey grid lines with the function `grid()`.
+\
+```{r number 5}
+# plot probesets
+plot(
+    x = garaud[, "sle.2"],
+    y = garaud[, "control.1"],
+    xlab = "Normal",
+    ylab = "SLE",
+    main = "SLE B cell sample vs. Normal B cell sample -- all probesets"
+)
+
+# add grid to plot
+grid()
+```
+
+\newpage
+
+#### 6.) Now do the same plot but pick only the first 20 probesets. Use the `pch = 15` argument to change the shape and color the points blue with the `col` argument.
+\
+```{r number 6}
+# plot probesets
+plot(
+    # subset rows 1 thru 20
+    x = garaud[1:20, "sle.2"],
+    y = garaud[1:20, "control.1"],
+    xlab = "Normal",
+    ylab = "SLE",
+    # update title to reflect subset
+    main = "SLE B cell sample vs. Normal B cell sample -- first 20 probesets",
+    # change shape and color of points
+    pch = 15,
+    col = "blue"
+)
+
+# add grid to plot
+grid()
+```
+
+\newpage
+
+#### 7.) Now plot the following gene in a gene profile plot, IGLJ3 (immunoglobulin lambda joining 3), which is probeset ID 211881_x\_at. This type of plot has the sample indices across the x-axis and the intensities on the y-axis, so you can see a profile of the gene across experiments or arrays. First plot the ranges using the `type=”n”` argument and the `plot()` function, then add the genes with the `lines()` function call. Add grid lines. Hint: to plot just ranges of x and y vectors, use the `range()` function like so:
+
+#### `plot(range(1:26),range(dat[geneX,]),...`
+
+#### Be sure to cast the gene vector to numeric before plotting.
+\
+```{r number 7}
+# subset the rows based on the probeset ID
+IGJL3_allsamples <- as.numeric(garaud["211881_x_at", ])
+
+# plot an empty canvas with labels
+plot(
+    x = range(1:26),
+    y = range(IGJL3_allsamples),
+    type = "n", # empty plot
+    xlab = "Sample Number",
+    ylab = "211881_x_at Intensity",
+    main = "Gene profile plot of IGJL3 (211881_x_at) across all samples"
+)
+
+# add line to plot
+lines(x = IGJL3_allsamples, lwd = 2)
+
+# add points and color based on sample type (17: SLE, 9: control)
+points(
+    x = IGJL3_allsamples,
+    pch = 16,
+    col = c(rep("goldenrod", 17), rep("purple", 9))
+)
+
+# add grid to plot
+grid()
+
+# add figure legend for clarity
+legend(
+    "topright",
+    bg = "white",
+    inset = 0.02,
+    legend = c("SLE", "Control"),
+    col = c("goldenrod", "purple"),
+    pch = 16
+)
+```
+
+\newpage
+
+#### 8.) Finally, another way to visualize a gene profile across conditions is to graph a boxplot with a single distribution box per condition. To do this, we need to create a factor vector that indicates the disease or normal condition like so:
+
+#### `f <- c(rep("SLE",17),rep("Control",9))`
+
+#### Then use this vector with the expression vector for IGLJ3 in the `boxplot()` function to create the graph.
+
+#### Not required, but you can increase the plot info by using the `with()` function and `stripchart()` function to add points.
+\
+```{r number 8}
+ # factor vector for samples
+samples <- factor(c(rep("SLE", 17), rep("Control", 9)), levels = c("SLE", "Control"))
+
+# create a data frame for the IGJL3 subset with factors included
+df.8 <- data.frame(Sample = samples, IGJL3 = IGJL3_allsamples)
+
+# makes jitter from stripchart reproducible
+set.seed(1234)
+
+# plot boxplot and add stripchart on top
+with(df.8, {
+    boxplot(
+        # formula: y ~ group
+        IGJL3 ~ Sample,
+        col = c("goldenrod", "purple"),
+        xlab = "", # remove x-axis label
+        ylab = "IGJL3 Intensity",
+        outcol = "white", # hides duplicate points (outliers + stripchart)
+        main = "Intensity Distribution by Sample Type"
+    )
+    # add stripchart on top
+    stripchart(
+        IGJL3 ~ Sample,
+        method = "jitter",
+        pch = 23,
+        bg = "lightgray",
+        vertical = TRUE,
+        add = TRUE
+    )
+    # add legend for clarity
+    legend(
+      "topright",
+      inset = 0.02,
+      legend = c("SLE", "Control"),
+      col = c("goldenrod", "purple"),
+      pch = 15
+    )    
+})
+```
+
+\newpage
+
+## Session info
+\
+```{r session info}
+sessionInfo()
+```
