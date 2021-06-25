@@ -3,6 +3,5 @@
 .RData
 .Ruserdata
 */data/*
-*/*_files/*
+*/*_files/figure-latex
 !*.zip
-!*.png
