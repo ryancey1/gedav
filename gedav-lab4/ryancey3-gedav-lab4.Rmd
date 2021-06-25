@@ -6,10 +6,6 @@ output:
   pdf_document:
     latex_engine: xelatex
     highlight: tango
-  html_document:
-    highlight: tango
-    theme: cosmo
-    keep_md: yes
 colorlinks: yes
 ---
 
@@ -266,7 +262,7 @@ affy.heatmap <- function(correlation_matrix, range_start, range_end, colors) {
         correlation_matrix,
         axes = FALSE,
         col = colors,
-        main = "Pearson correlation plot\naffy.rma",
+        main = paste("Pearson correlation plot", deparse(substitute(correlation_matrix)), sep="\n"),
         breaks = seq(range_start, range_end, length.out = (length(colors) + 1))
     )
     # grid to separate cells on heatmap
