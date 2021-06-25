@@ -6,6 +6,10 @@ output:
   pdf_document:
     latex_engine: xelatex
     highlight: tango
+  html_document:
+    highlight: tango
+    theme: cosmo
+    keep_md: yes
 colorlinks: yes
 ---
 
