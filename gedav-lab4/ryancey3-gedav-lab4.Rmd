@@ -262,7 +262,8 @@ affy.heatmap <- function(correlation_matrix, range_start, range_end, colors) {
         correlation_matrix,
         axes = FALSE,
         col = colors,
-        main = paste("Pearson correlation plot", deparse(substitute(correlation_matrix)), sep="\n"),
+        main = paste("Pearson correlation plot",
+                     deparse(substitute(correlation_matrix)), sep="\n"),
         breaks = seq(range_start, range_end, length.out = (length(colors) + 1))
     )
     # grid to separate cells on heatmap
