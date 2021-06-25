@@ -4,4 +4,4 @@
 .Ruserdata
 */data/*
 */*_files
-
+!*.zip
