@@ -5,4 +5,4 @@
 */data/*
 */*_files
 !*.zip
-!figure-html/*
+!*/*_files/figure-html/*
