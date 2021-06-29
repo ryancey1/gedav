@@ -3,6 +3,10 @@ title: "Lab 4 - Normalization and Bioconductor"
 author: "Ryan Yancey"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
+  html_document: 
+    highlight: tango
+    theme: cosmo
+    keep_md: yes
   pdf_document:
     latex_engine: xelatex
     highlight: tango

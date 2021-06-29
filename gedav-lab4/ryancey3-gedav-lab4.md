@@ -1,15 +1,15 @@
 ---
 title: "Lab 4 - Normalization and Bioconductor"
 author: "Ryan Yancey"
-date: "24 June 2021"
+date: "27 June 2021"
 output:
-  pdf_document:
-    latex_engine: xelatex
-    highlight: tango
-  html_document:
+  html_document: 
     highlight: tango
     theme: cosmo
     keep_md: yes
+  pdf_document:
+    latex_engine: xelatex
+    highlight: tango
 colorlinks: yes
 ---
 
@@ -355,7 +355,8 @@ affy.heatmap <- function(correlation_matrix, range_start, range_end, colors) {
         correlation_matrix,
         axes = FALSE,
         col = colors,
-        main = "Pearson correlation plot\naffy.rma",
+        main = paste("Pearson correlation plot",
+                     deparse(substitute(correlation_matrix)), sep="\n"),
         breaks = seq(range_start, range_end, length.out = (length(colors) + 1))
     )
     # grid to separate cells on heatmap
