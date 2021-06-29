@@ -52,6 +52,10 @@ data <- read.GenePix(path = "data/gp")
 
 #### **2.) Normalize each array using median global, loess, and print-tip-group loess methods. Then plot MvA plots of all 4 arrays comparing no normalization to the other 3 normalization approaches.**
 
+```{r norm-function}
+
+```
+
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**
 
 #### **4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?**
