@@ -52,8 +52,33 @@ data <- read.GenePix(path = "data/gp")
 
 #### **2.) Normalize each array using median global, loess, and print-tip-group loess methods. Then plot MvA plots of all 4 arrays comparing no normalization to the other 3 normalization approaches.**
 
-```{r norm-function}
+```{r norm-function, cache = TRUE}
+# define function to reduce redundancy
+norm_and_plot <- function(array) {
+    # named list of normalized data
+    norms <- list(
+        notNormalized = maNorm(array, norm = "n"),
+        medianNormalized = maNorm(array, norm = "m"),
+        loessNormalized = maNorm(array, norm = "l"),
+        printTipLoess = maNorm(array, norm = "p")
+    )
+    # graph normalized data
+    par(mfrow = c(2, 2))
+    for (i in seq_along(norms)) {
+        d.method <- names(norms)[i]
+        d.name <- deparse(substitute(array))
+        maPlot(m = norms[[i]],
+               lines.func = NULL,
+               legend.func = NULL,
+               main = paste(d.name, d.method, sep = ": "))
+    }
+}
 
+# run function on all arrays
+norm_and_plot(data[, 1])
+norm_and_plot(data[, 2])
+norm_and_plot(data[, 3])
+norm_and_plot(data[, 4])
 ```
 
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**

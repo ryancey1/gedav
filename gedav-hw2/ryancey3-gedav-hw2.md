@@ -57,6 +57,53 @@ data <- read.GenePix(path = "data/gp")
 
 #### **2.) Normalize each array using median global, loess, and print-tip-group loess methods. Then plot MvA plots of all 4 arrays comparing no normalization to the other 3 normalization approaches.**
 
+
+```r
+# define function to reduce redundancy
+norm_and_plot <- function(array) {
+    # named list of normalized data
+    norms <- list(
+        notNormalized = maNorm(array, norm = "n"),
+        medianNormalized = maNorm(array, norm = "m"),
+        loessNormalized = maNorm(array, norm = "l"),
+        printTipLoess = maNorm(array, norm = "p")
+    )
+    # graph normalized data
+    par(mfrow = c(2, 2))
+    for (i in seq_along(norms)) {
+        d.method <- names(norms)[i]
+        d.name <- deparse(substitute(array))
+        maPlot(m = norms[[i]],
+               lines.func = NULL,
+               legend.func = NULL,
+               main = paste(d.name, d.method, sep = ": "))
+    }
+}
+
+# run function on all arrays
+norm_and_plot(data[, 1])
+```
+
+<img src="ryancey3-gedav-hw2_files/figure-html/norm-function-1.png" style="display: block; margin: auto;" />
+
+```r
+norm_and_plot(data[, 2])
+```
+
+<img src="ryancey3-gedav-hw2_files/figure-html/norm-function-2.png" style="display: block; margin: auto;" />
+
+```r
+norm_and_plot(data[, 3])
+```
+
+<img src="ryancey3-gedav-hw2_files/figure-html/norm-function-3.png" style="display: block; margin: auto;" />
+
+```r
+norm_and_plot(data[, 4])
+```
+
+<img src="ryancey3-gedav-hw2_files/figure-html/norm-function-4.png" style="display: block; margin: auto;" />
+
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**
 
 #### **4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?**
