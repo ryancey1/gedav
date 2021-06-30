@@ -60,23 +60,30 @@ data <- read.GenePix(path = "data/gp")
 
 ```r
 # define function to reduce redundancy
-norm_and_plot <- function(array) {
+norm_and_plot <- function(array, plot = TRUE) {
     # named list of normalized data
     norms <- list(
-        notNormalized = maNorm(array, norm = "n"),
-        medianNormalized = maNorm(array, norm = "m"),
-        loessNormalized = maNorm(array, norm = "l"),
-        printTipLoess = maNorm(array, norm = "p")
+        NotNormalized = maNorm(array, norm = "n"),
+        MedianNormalized = maNorm(array, norm = "m"),
+        LoessNormalized = maNorm(array, norm = "l"),
+        PrintTipLoessNormalized = maNorm(array, norm = "p")
     )
-    # graph normalized data
-    par(mfrow = c(2, 2))
-    for (i in seq_along(norms)) {
-        d.method <- names(norms)[i]
-        d.name <- deparse(substitute(array))
-        maPlot(m = norms[[i]],
-               lines.func = NULL,
-               legend.func = NULL,
-               main = paste(d.name, d.method, sep = ": "))
+    if (plot) {
+        # graph normalized data
+        par(mfrow = c(2, 2), lwd = 2)
+        for (i in seq_along(norms)) {
+            d.method <- names(norms)[i]
+            d.name <- deparse(substitute(array))
+            maPlot(
+                m = norms[[i]],
+                lines.func = NULL,
+                legend.func = NULL,
+                main = paste(d.name, d.method, sep = ": ")
+            )
+        }
+    }
+    else {
+        return(norms)
     }
 }
 
@@ -105,6 +112,35 @@ norm_and_plot(data[, 4])
 <img src="ryancey3-gedav-hw2_files/figure-html/norm-function-4.png" style="display: block; margin: auto;" />
 
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**
+
+
+```r
+array4 <- norm_and_plot(data[, 4], plot = FALSE)
+par(lwd = 2, font.lab = 2)
+plot(
+    x = range(-7, 7),
+    y = range(0, 0.9),
+    type = "n",
+    ylab = "Density",
+    xlab = "Log-ratios",
+    main = "Density plot"
+)
+lines(density(array4[[1]]@maM, na.rm = TRUE), col = "red")
+lines(density(array4[[2]]@maM, na.rm = TRUE), col = "blue")
+lines(density(array4[[3]]@maM, na.rm = TRUE), col = "green")
+lines(density(array4[[4]]@maM, na.rm = TRUE), col = "black")
+legend(
+    "topright",
+    legend = labels(array4),
+    lty = 1,
+    col = c("red", "blue", "green", "black"),
+    cex = 0.7,
+    inset = 0.02,
+    text.font = 2
+)
+```
+
+<img src="ryancey3-gedav-hw2_files/figure-html/density-plots-1.png" style="display: block; margin: auto;" />
 
 #### **4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?**
 
