@@ -11,7 +11,7 @@
 
 <meta name="author" content="Ryan Yancey" />
 
-<meta name="date" content="2021-06-29" />
+<meta name="date" content="2021-06-30" />
 
 <title>Homework 2</title>
 
@@ -249,7 +249,7 @@ pre code {
 
 <h1 class="title toc-ignore">Homework 2</h1>
 <h4 class="author">Ryan Yancey</h4>
-<h4 class="date">29 June 2021</h4>
+<h4 class="date">30 June 2021</h4>
 
 </div>
 
@@ -333,10 +333,10 @@ pre code {
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">xlab =</span> <span class="st">&quot;Log-ratios&quot;</span>,</span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> <span class="st">&quot;Density plot&quot;</span></span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(array4[[<span class="dv">1</span>]]<span class="sc">@</span>maM, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;red&quot;</span>)</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(array4[[<span class="dv">2</span>]]<span class="sc">@</span>maM, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(array4[[<span class="dv">3</span>]]<span class="sc">@</span>maM, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;green&quot;</span>)</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(array4[[<span class="dv">4</span>]]<span class="sc">@</span>maM, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;black&quot;</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(<span class="fu">maM</span>(array4[[<span class="dv">1</span>]]), <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;red&quot;</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(<span class="fu">maM</span>(array4[[<span class="dv">2</span>]]), <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(<span class="fu">maM</span>(array4[[<span class="dv">3</span>]]), <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;green&quot;</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">density</span>(<span class="fu">maM</span>(array4[[<span class="dv">4</span>]]), <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">col =</span> <span class="st">&quot;black&quot;</span>)</span>
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(</span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;topright&quot;</span>,</span>
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend =</span> <span class="fu">labels</span>(array4),</span>
@@ -350,9 +350,29 @@ pre code {
 </div>
 <div id="based-on-the-plots-generated-so-far-which-normalization-do-you-think-is-most-preferred-for-this-dataset" class="section level4">
 <h4><strong>4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?</strong></h4>
+<p>For this data set, it appears either the “within-print-tip-group intensity dependent location normalization” (printTipLoess) or the “global intensity or A-dependent location normalization” (loess) methods work <em>equally</em> well.</p>
 </div>
 <div id="research-has-demonstrated-that-often-a-single-channel-background-subtracted-provides-as-good-a-normalization-as-using-both-channels.-to-test-this-we-will-be-utilizing-the-fact-that-these-4-samples-are-replicates-and-calculate-the-correlation-between-them.-so-first-extract-the-cy5-foreground-and-background-values-for-each-of-the-4-arrays-and-subtract-the-background-from-the-foreground-values-then-log2-transform-these-values.-then-calculate-global-median-normalization-on-these-4-arrays-using-these-background-subtracted-cy5-values.-hint-you-need-to-use-the-median-of-each-array-to-scale-such-that-after-normalization-all-arrays-will-have-a-median-of-1." class="section level4">
 <h4><strong>5.) Research has demonstrated that often a single channel, background subtracted provides as good a normalization as using both channels. To test this, we will be utilizing the fact that these 4 samples are replicates and calculate the correlation between them. So, first extract the Cy5 foreground and background values for each of the 4 arrays and subtract the background from the foreground values, then log2 transform these values. Then calculate global median normalization on these 4 arrays using these background subtracted Cy5 values. Hint, you need to use the median of each array to scale, such that after normalization, all arrays will have a median of 1.</strong></h4>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># subtract background</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>bgsub_Cy5 <span class="ot">&lt;-</span> <span class="fu">maRf</span>(data) <span class="sc">-</span> <span class="fu">maRb</span>(data)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># log transform and get median</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>log.bgsub_Cy5 <span class="ot">&lt;-</span> <span class="fu">log2</span>(bgsub_Cy5)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>(m <span class="ot">&lt;-</span> <span class="fu">apply</span>(log.bgsub_Cy5, <span class="dv">2</span>, median, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
+<pre><code>## data/gp/GSM304445.gpr data/gp/GSM304446.gpr data/gp/GSM304447.gpr 
+##              5.392317              4.754888              4.584963 
+## data/gp/GSM304448.gpr 
+##              4.754888</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># normalize</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>gmn_bgsub_Cy5 <span class="ot">&lt;-</span> log.bgsub_Cy5<span class="sc">/</span>m</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># check medians</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(gmn_bgsub_Cy5, <span class="dv">2</span>, median, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## data/gp/GSM304445.gpr data/gp/GSM304446.gpr data/gp/GSM304447.gpr 
+##             1.1267463             0.9801727             0.9513499 
+## data/gp/GSM304448.gpr 
+##             0.9866083</code></pre>
 </div>
 <div id="next-calculate-a-spearmans-rank-correlation-between-all-4-arrays-that-you-normalized-in-5-and-do-the-same-with-the-m-values-from-loess-normalized-data-that-you-generated-in-2.-plot-a-scatter-plot-matrix-for-each-of-the-two-normalizations-pairs-function-and-be-sure-to-label-the-arrays-and-title-the-plot.-print-the-correlation-coefficients-to-the-screen." class="section level4">
 <h4><strong>6.) Next calculate a Spearman’s rank correlation between all 4 arrays that you normalized in #5 and do the same with the M values from loess normalized data that you generated in #2. Plot a scatter plot matrix for each of the two normalizations (pairs() function), and be sure to label the arrays and title the plot. Print the correlation coefficients to the screen.</strong></h4>

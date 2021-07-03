@@ -1,7 +1,7 @@
 ---
 title: "Homework 2"
 author: "Ryan Yancey"
-date: "29 June 2021"
+date: "30 June 2021"
 output: 
     html_document:
         highlight: tango
@@ -125,10 +125,10 @@ plot(
     xlab = "Log-ratios",
     main = "Density plot"
 )
-lines(density(array4[[1]]@maM, na.rm = TRUE), col = "red")
-lines(density(array4[[2]]@maM, na.rm = TRUE), col = "blue")
-lines(density(array4[[3]]@maM, na.rm = TRUE), col = "green")
-lines(density(array4[[4]]@maM, na.rm = TRUE), col = "black")
+lines(density(maM(array4[[1]]), na.rm = TRUE), col = "red")
+lines(density(maM(array4[[2]]), na.rm = TRUE), col = "blue")
+lines(density(maM(array4[[3]]), na.rm = TRUE), col = "green")
+lines(density(maM(array4[[4]]), na.rm = TRUE), col = "black")
 legend(
     "topright",
     legend = labels(array4),
@@ -144,7 +144,42 @@ legend(
 
 #### **4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?**
 
+For this data set, it appears either the "within-print-tip-group intensity dependent location normalization" (printTipLoess) or the "global intensity or A-dependent location normalization" (loess) methods work *equally* well.
+
 #### **5.) Research has demonstrated that often a single channel, background subtracted provides as good a normalization as using both channels. To test this, we will be utilizing the fact that these 4 samples are replicates and calculate the correlation between them. So, first extract the Cy5 foreground and background values for each of the 4 arrays and subtract the background from the foreground values, then log2 transform these values. Then calculate global median normalization on these 4 arrays using these background subtracted Cy5 values. Hint, you need to use the median of each array to scale, such that after normalization, all arrays will have a median of 1.**
+
+
+```r
+# subtract background
+bgsub_Cy5 <- maRf(data) - maRb(data)
+
+# log transform and get median
+log.bgsub_Cy5 <- log2(bgsub_Cy5)
+(m <- apply(log.bgsub_Cy5, 2, median, na.rm = TRUE))
+```
+
+```
+## data/gp/GSM304445.gpr data/gp/GSM304446.gpr data/gp/GSM304447.gpr 
+##              5.392317              4.754888              4.584963 
+## data/gp/GSM304448.gpr 
+##              4.754888
+```
+
+```r
+# normalize
+gmn_bgsub_Cy5 <- log.bgsub_Cy5/m
+
+# check medians
+apply(gmn_bgsub_Cy5, 2, median, na.rm = TRUE)
+```
+
+```
+## data/gp/GSM304445.gpr data/gp/GSM304446.gpr data/gp/GSM304447.gpr 
+##             1.1267463             0.9801727             0.9513499 
+## data/gp/GSM304448.gpr 
+##             0.9866083
+```
+
 
 #### **6.) Next calculate a Spearman’s rank correlation between all 4 arrays that you normalized in #5 and do the same with the M values from loess normalized data that you generated in #2. Plot a scatter plot matrix for each of the two normalizations (pairs() function), and be sure to label the arrays and title the plot. Print the correlation coefficients to the screen.**
 

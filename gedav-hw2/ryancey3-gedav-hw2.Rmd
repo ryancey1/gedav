@@ -91,36 +91,96 @@ norm_and_plot(data[, 4])
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**
 
 ```{r density-plots, cache = TRUE}
+# save array4 normalized to variable
 array4 <- norm_and_plot(data[, 4], plot = FALSE)
-par(lwd = 2, font.lab = 2)
+
+# save density calculations
+d1 <- density(maM(array4[[1]]), na.rm = TRUE) # none
+d2 <- density(maM(array4[[2]]), na.rm = TRUE) # median
+d3 <- density(maM(array4[[3]]), na.rm = TRUE) # loess
+d4 <- density(maM(array4[[4]]), na.rm = TRUE) # printiploess
+
+# plot ranges
+par(lwd = 3, font.lab = 2)
 plot(
-    x = range(-7, 7),
-    y = range(0, 0.9),
+    x = range(d1$x, d2$x, d3$x, d4$x),
+    y = range(d1$y, d2$y, d3$y, d4$y),
     type = "n",
     ylab = "Density",
     xlab = "Log-ratios",
     main = "Density plot"
 )
-lines(density(array4[[1]]@maM, na.rm = TRUE), col = "red")
-lines(density(array4[[2]]@maM, na.rm = TRUE), col = "blue")
-lines(density(array4[[3]]@maM, na.rm = TRUE), col = "green")
-lines(density(array4[[4]]@maM, na.rm = TRUE), col = "black")
+# density plots
+lines(d1, col = "magenta")
+lines(d2, col = "cyan")
+lines(d3, col = "red")
+lines(d4, col = "green", lty = 3) # dotted overlapped easier to see
 legend(
     "topright",
     legend = labels(array4),
-    lty = 1,
-    col = c("red", "blue", "green", "black"),
-    cex = 0.7,
-    inset = 0.02,
-    text.font = 2
+    lty = c(1, 1, 1, 3), 
+    col = c("magenta", "cyan", "red", "green"),
+    inset = 0.02, cex = 0.7, text.font = 2
+)
+text(
+  x = 2.5, y = 0.5, adj = c(0, 1), cex = 0.8,
+  labels = "<- Loess/PrintTipLoess\n    overlap tremendously",
+  font = 2
 )
 ```
 
 #### **4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?**
 
+For this data set, it appears either the "within-print-tip-group intensity dependent location normalization" (printTipLoess) or the "global intensity or A-dependent location normalization" (loess) methods work *equally* well.
+
 #### **5.) Research has demonstrated that often a single channel, background subtracted provides as good a normalization as using both channels. To test this, we will be utilizing the fact that these 4 samples are replicates and calculate the correlation between them. So, first extract the Cy5 foreground and background values for each of the 4 arrays and subtract the background from the foreground values, then log2 transform these values. Then calculate global median normalization on these 4 arrays using these background subtracted Cy5 values. Hint, you need to use the median of each array to scale, such that after normalization, all arrays will have a median of 1.**
 
+```{r red-channel-normalization, warning=FALSE}
+Rf <- maRf(data) # Cy5 fg
+Rb <- maRb(data) # Cy5 bg
+R <- Rf - Rb # subtract bg from fg
+
+# log2 transform
+log2R <- log2(R)
+
+# calculate c = log2(k)
+c <- apply(log2R, 2, median, na.rm = TRUE)
+
+# subtract the vector from each row
+mnorm.log2R <- t(apply(log2R, 1, function(x) x - c))
+
+# verify the median is log2(1) = 0
+apply(mnorm.log2R, 2, median, na.rm = TRUE)
+```
+
+
 #### **6.) Next calculate a Spearman’s rank correlation between all 4 arrays that you normalized in #5 and do the same with the M values from loess normalized data that you generated in #2. Plot a scatter plot matrix for each of the two normalizations (pairs() function), and be sure to label the arrays and title the plot. Print the correlation coefficients to the screen.**
+
+```{r correlation}
+(corr.mnorm <- round(cor(mnorm.log2R,
+                   use = "pairwise.complete.obs",
+                   method = "spearman"), 2))
+pairs(
+  x = corr.mnorm,
+  las = 2, pch = 19, cex.labels = 0.9,
+  labels = gsub(pattern = ".*/", replacement = "", colnames(corr.mnorm)),
+  upper.panel = NULL,
+  col = "green",
+  main = "Single Channel, Global Median Normalized"
+)
+
+(corr.loess <- round(cor(maM(maNorm(data, norm = "loess")),
+                   use = "pairwise.complete.obs",
+                   method = "spearman"), 2))
+pairs(
+  x = corr.loess,
+  las = 2, pch = 19, cex.labels = 0.9,
+  labels = gsub(pattern = ".*/", replacement = "", colnames(corr.loess)),
+  upper.panel = NULL,
+  col = "red",
+  main = "Two Channel, Loess Normalized"
+)
+```
 
 #### **7.) Now we want to compare these normalizations to quantile normalized data to see if we gain anything by leveraging the distributions across all 4 arrays. Carry out the steps in the lecture or use the paper from Bolstad et al. entitled: “A comparison of normalization methods for high density oligonucleotide array data based on variance and bias” (on the course website), but we are only going to conduct this on the Cy5 channel. The basic steps are as follows (these 6 steps are calculated on non-logged data; the data is logged after these steps are carried out):**
 
@@ -144,7 +204,25 @@ legend(
 
 #### **10.) Now we want to work with a qRT-PCR dataset from patients with an inflammatory disease. The genes measured for this experiment included a set of proinflammatory chemokines and cytokines that are related to the disease. Download the raw qRT-PCR file called Inflammation_qRT-PCR.csv. Then change the normalization script from the lecture notes to include the housekeeping genes beta actin, GAPDH, and 18S. Look at the file to make sure the housekeepers are spelled correctly. Run the normalization script and output a data matrix of fold change values.**
 
+```{r qRT-PCR}
+source("scripts/f.parse.R")
+
+pa <- "data/"
+fi <- "qRT-PCR.csv"
+out.fi <- "out.fi"
+
+f.parse(pa, fi, out.fi)
+```
+
+
 #### **11.) Read the normalized qRT-PCR data matrix into R, using a Spearman’s rank correlation, which two patients are most correlated? Plot these two patients against each other in a scatter plot.**
+
+```{r final-chunk}
+
+norm.dat <- read.table("data/out.fi", header = TRUE, row.names = 1, sep = "\t")
+
+(corr.norm.dat <- cor(t(norm.dat), method = "spearman"))
+```
 
 [1]: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE12050
 
