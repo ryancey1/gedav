@@ -1,0 +1,258 @@
+---
+title: "Lab 5 - Differential expression"
+author: "Ryan Yancey"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+    pdf_document:
+        highlight: tango
+        latex_engine: xelatex
+    html_document:
+        highlight: tango
+        theme: cosmo
+        keep_md: yes
+colorlinks: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = TRUE,
+    fig.align = "center"
+)
+
+rm(list = ls())
+system(command = "rm data/rat_KD.txt data/probes.txt")
+```
+
+------------------------------------------------------------------------
+
+#### In this lab, we will be conducting a two-sample test for each gene/probe on the array to identify differentially expressed genes/probes between ketogenic rats and control diet rats. This small data set was run on the rat RAE230A Affymetrix array. The objective of the study was to determine differences in mRNA levels between brain hippocampi of animals fed a ketogenic diet (KD) and animals fed a control diet. “KD is an anticonvulsant treatment used to manage medically intractable epilepsies”, so differences between the 2 groups of rats can provide biological insight into the genes that are regulated due to the treatment (source: [GSE1155][00]).
+
+#### We are going to identify those genes/probes that are differentially expressed between the 2 rat diet groups and plot the results with a couple of different visual summaries.
+
+
+#### **1.) Download the GEO rat ketogenic brain data set and save as a text file.**
+\
+```{r unzip-files}
+# "rat_KD.zip" downloaded from Data sets section in course
+# Decompress the zip files into a data directory
+system("unzip -o ./data/rat_KD.zip -d ./data/")
+
+# Check to make sure the unzip process went well
+dir("data/")
+```
+
+\newpage
+#### **2.) Load into R, using `read.table()` function and `header=T`, `row.names=1` arguments.**
+\
+```{r load-rat-data}
+# Read data into R as "dat"
+dat <- read.table(file = "data/rat_KD.txt",
+                  header = TRUE,
+                  row.names = 1)
+
+# Check out the data structure
+str(dat)
+```
+
+
+In the data, there appears to be **`r length(grep("control", names(dat)))` control diet** samples and **`r length(grep("ketogenic", names(dat)))` ketogenic diet** samples.
+
+\newpage
+#### **3.) First $log_2$ the data, then use the Student’s t-test function in the notes to calculate the changing genes between the control diet and ketogenic diet classes. (Hint: use the `names()` function to determine where one class ends and the other begins).**
+\
+```{r transform-then-significance}
+# Log transform the data
+log2.dat <- log2(dat)
+
+# Function from lecture notes
+t.test.all.genes <- function(x,s1,s2) {
+        x1 <- x[s1]; x2 <- x[s2]
+        x1 <- as.numeric(x1); x2 <- as.numeric(x2)
+        t.out <- t.test(x1,x2, alternative="two.sided",var.equal=T)
+        out <- as.numeric(t.out$p.value)
+        return(out)
+}
+
+# Gather indices of the groups
+control <- grep("control", names(log2.dat))
+keto <- grep("ketogenic", names(log2.dat))
+
+# Get p-values
+pv <- apply(log2.dat, 1, t.test.all.genes, s1 = control, s2 = keto)
+```
+
+\newpage
+#### **4.) Plot a histogram of the p-values and report how many probesets have a p<0.05 and p<0.01. Then divide an alpha of 0.05 by the total number of probesets and report how many probesets have a p-value less than this value. This is a very conservative p-value thresholding method to account for multiple testing called the Bonferroni correction that we will discuss in upcoming lectures.**
+\
+```{r hist, fig.height=6}
+# Plot histogram of p-values
+hist(-log10(pv), col = "lightblue")
+
+# Vertical lines at p-value thresholds
+abline(v = c(-log10(0.05), -log10(0.01)), col = c("red", "blue"), lwd = 2)
+
+# Legend
+legend(x = "topright", legend = c("p < 0.05", "p < 0.01"),
+       col = c("red", "blue"), lty = 1, lwd = 2)
+
+# How many transcripts have p-values below alpha 0.05?
+(lt0.05 <- sum(pv < 0.05))
+
+# How many transcripts have p-values below alpha 0.01?
+(lt0.01 <- sum(pv < 0.01))
+
+# Bonferroni-corrected alpha
+nProbesets <- length(names(pv))
+bf.alpha <- 0.05/nProbesets
+
+# How many are below Bonferroni-corrected alpha value?
+(pv.sig <- sum(pv < bf.alpha))
+```
+
+Although **`r lt0.05`** probesets have p-values calculated to be below 0.05 and **`r lt0.01`** probesets appear to have p-values below 0.01, we need to account for the problem of multiple comparisons. Since we make `r nProbesets` separate comparisons to get all our p-values, we need to correct this potential source of error. After performing a conservative Bonferroni correction, we see that in actuality, only **`r pv.sig`** probesets can be regarded as *likely* significant (below the corrected threshold p-value).
+
+#### **5.) Next calculate the mean for each gene, and calculate the fold change between the groups (control vs. ketogenic diet). Remember that you are on a $log_2$ scale.**
+\
+
+We can find the fold change $FC_{ctrl.vs.keto} = (\frac{\bar{x}_{ctrl}}{\bar{x}_{keto}})$ by subtracting the logarithms:
+
+\begin{center}
+$log_2(\frac{\bar{x}_{ctrl}}{\bar{x}_{keto}}) = log_2(\bar{x}_{ctrl}) - log_2(\bar{x}_{keto})$
+\end{center}
+
+```{r fold-change}
+# Mean of each transcript in control sample
+control.m <- apply(log2.dat[,control], 1, mean, na.rm = TRUE)
+
+# Mean of each transcript in keto sample
+keto.m <- apply(log2.dat[,keto], 1, mean, na.rm = TRUE)
+
+# log2(FC) of all transcripts
+log2fc <- control.m - keto.m
+```
+
+\newpage
+#### **6.) What is the maximum and minimum fold change value, please report on the linear scale? Now report the probesets with a p-value less than the Bonferroni threshold you used in question 4 and |fold change| > 2. Remember that you are on a $log_2$ scale for your fold change and I am looking for a linear |fold| of 2.**
+\
+
+To transpose the fold change, we will return it to the exponential with the following equation: 
+
+\begin{center}
+$log_b(M) = N \Longrightarrow M = b^N$.
+\end{center}
+
+So, by raising 2 to the power of each $log_2FC$ value, we obtain the non-transformed fold change.
+
+```{r max-min}
+# Linear scale FC
+fc <- 2^(log2fc)
+
+# Minimum and maximum values
+min <- min(fc); max <- max(fc)
+
+# Linear scale the subset of probesets with |log2fc| > 2
+(filt.fc <- 2^log2fc[abs(log2fc) > 2])
+
+# Get probesets whose p-value is less than Bonferroni alpha
+(filt.pv <- pv[pv < bf.alpha])
+
+# Find probeset names which appear in filt.fc and pv < bf.alpha sets
+(less_than_bf.alpha  <- intersect(names(filt.fc), names(filt.pv)))
+
+# Write file of probesets to upload to DAVID
+write.table(
+    less_than_bf.alpha,
+    file = "data/probes.txt",
+    quote = FALSE,
+    row.names = FALSE,
+    col.names = FALSE
+)
+```
+
+After exponentiating the log-transformed fold changes into their linear values, the *minimum* fold change is **`r min`** and the *maximum* fold change is **`r max`**.
+
+Additionally, there are `r length(less_than_bf.alpha)` probesets with **both** a linear $|FC| > 2$ and $p < `r bf.alpha`$ (Bonferroni-corrected alpha).
+
+\newpage
+#### **7.) Go to NetAffx or another database source if you like and identify gene information for the probesets that came up in #6. What is the general biological function that associates with these probesets?**
+\
+
+![](img/david-result.png)
+
+As seen in the results above all of the probe-sets are involved in:
+
+- Cellular Component: **hemoglobin complex ([GO:0005833][1])**
+
+- Biological Process: **oxygen transport ([GO:0015671][2])**
+
+- Molecular Functions: **oxygen transporter activity ([GO:0005344][3]), iron ion binding ([GO:0005506][4]), oxygen binding ([GO:0019825][5]), heme binding ([GO:0020037][6])**
+
+**Essentially, they are all associated with the biological functionality of red blood cells.** To re-create, upload `probes.txt` to the [DAVID tool][0], select "AFFYMETRIX_3PRIME_IVT_ID" as the identifier, and check "Gene List" as the list type. Then, click the "Functional Annotation Table" on the bottom of the page to retrieve the table pictured above (as of `r format(Sys.time(), '%d %B %Y')`).
+
+\newpage
+#### **8.) Transform the p-value ($-log_{10}(p.value)$) and create a volcano plot with the p-value and fold change vectors (see the lecture notes). Make sure to use a $log_{10}$ transformation for the p-value and a $log_2$ (R function `log2()`) transformation for the fold change. Draw the horizontal lines at fold values of 2 and -2 ($log_2(p)=1$) and the vertical p-value threshold line at p = 0.05 (remember that it is transformed in the plot).**
+\
+```{r volcano-plot, fig.height=7, fig.width=8}
+# Transform p-value
+p.trans <- -log10(pv)
+
+# Volcano plot
+plot(
+    range(log2fc),
+    range(p.trans),
+    type = "n", las = 1, 
+    main = "Volcano Plot",
+    xlab = expression(log[2] ~ (FC)),
+    ylab = expression(-log[10] ~ (pvalue)),
+    xlim = c(-6, 6)
+)
+points(log2fc,
+       p.trans,
+       pch = 21,
+       col = "black",
+       bg = "black")
+
+# Up-regulated genes
+points(log2fc[(p.trans > -log10(.05) &
+                   log2fc > log2(2))],
+       p.trans[(p.trans > -log10(.05) &
+                    log2fc > log2(2))],
+       pch = 21, col = "black", bg = "green")
+
+# Down-regulated genes
+points(log2fc[(p.trans > -log10(.05) &
+                   log2fc < -log2(2))],
+       p.trans[(p.trans > -log10(.05) &
+                    log2fc < -log2(2))],
+       pch = 21, col = "black", bg = "red")
+
+# Plot markers
+abline(h = -log10(0.05), col = "grey50")
+abline(v = log2(2), col = "darkgreen")
+abline(v = -log2(2), col = "darkred")
+
+# Legend
+legend(
+    "topleft",
+    legend = c("p-value < 0.05", "FC > 2", "FC < -2"),
+    col = c("grey50", "darkgreen", "darkred"),
+    lty = 1, cex = 0.8, inset = 0.02
+)
+```
+
+\newpage
+## Session Info
+\
+```{r session-info}
+sessionInfo()
+```
+
+<!-- Sources -->
+[00]: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE1155
+[0]: https://david.abcc.ncifcrf.gov/tools.jsp
+[1]: https://www.ebi.ac.uk/QuickGO/GTerm?id=GO:0005833
+[2]: https://www.ebi.ac.uk/QuickGO/GTerm?id=GO:0015671
+[3]: https://www.ebi.ac.uk/QuickGO/GTerm?id=GO:0005344
+[4]: https://www.ebi.ac.uk/QuickGO/GTerm?id=GO:0005506
+[5]: https://www.ebi.ac.uk/QuickGO/GTerm?id=GO:0019825
+[6]: https://www.ebi.ac.uk/QuickGO/GTerm?id=GO:0020037
