@@ -186,13 +186,34 @@ pairs(
 
 1. Subtract the foreground – background for each of the 4 chips for only the Cy5 channel. This should all be on the linear or raw scale (no logging yet).
 
+```{r step1}
+one <- maRf(data) - maRb(data)
+```
+
 2. Sort each column independently in this new matrix
+
+```{r step2}
+two <- apply(one, 2, sort)
+```
 
 3. Calculate row means for the sorted matrix
 
+```{r step3}
+three <- apply(two, 1, mean)
+```
+
 4. Create a new matrix with each row having the same values as the sorted row mean vectors from step #3 (you should have a new R matrix)
 
+```{r step4}
+step4 <- matrix(three, nrow = length(three), ncol = 4, byrow = FALSE)
+```
+
 5. Rank the columns independently on the original background subtracted matrix (from step #1) Hint: use the `rank()` function with the argument `ties=”first”` or `order()`
+
+```{r step5}
+step5 <- apply(one, 2, rank, ties.method = "first")
+```
+
 
 6. Reorder the columns in the new matrix from step #4 using the ranks from step #5
 
