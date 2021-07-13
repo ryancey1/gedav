@@ -68,28 +68,28 @@ setwd(cwd)
 source("scripts/norm_and_plot.R")
 ```
 
-```{r norm-plot-1, cache = TRUE}
+```{r norm-plot-1, fig.height = 6, cache = TRUE}
 # Run function on array1
 norm_and_plot(data[, 1])
 ```
 \ 
 \newpage 
 
-```{r norm-plot-2, cache = TRUE}
+```{r norm-plot-2, fig.height = 6, cache = TRUE}
 # Run function on array2
 norm_and_plot(data[, 2])
 ```
 \ 
 \newpage 
 
-```{r norm-plot-3, cache = TRUE}
+```{r norm-plot-3, fig.height = 6, cache = TRUE}
 # Run function on array3
 norm_and_plot(data[, 3])
 ```
 \ 
 \newpage 
 
-```{r norm-plot-4, cache = TRUE}
+```{r norm-plot-4, fig.height = 6, cache = TRUE}
 # Run function on array4
 norm_and_plot(data[, 4])
 ```
@@ -98,7 +98,7 @@ norm_and_plot(data[, 4])
 
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**
 \ 
-```{r density-plots, cache = TRUE}
+```{r density-plots, fig.height = 6, cache = TRUE}
 # Save array4 normalized to variable
 array4 <- norm_and_plot(data[, 4], plot = FALSE)
 
