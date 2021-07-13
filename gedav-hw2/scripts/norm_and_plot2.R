@@ -1,15 +1,14 @@
-# define function to reduce redundancy
-norm_and_plot <- function(array, plot = TRUE) {
+norm_and_plot2 <- function(array, method=c("none", "median", "loess", "printTipLoess"), plot = TRUE) {
     # named list of normalized data
     norms <- list(
-        notNormalized = maNorm(array, norm = "n"),
-        medianNormalized = maNorm(array, norm = "m"),
-        loessNormalized = maNorm(array, norm = "l"),
-        printTipLoess = maNorm(array, norm = "p")
+        NotNormalized = maNorm(array, norm = method[1]),
+        MedianNormalized = maNorm(array, norm = method[2]),
+        LoessNormalized = maNorm(array, norm = method[3]),
+        PrintTipLoessNormalized = maNorm(array, norm = method[4])
     )
     if (plot) {
         # graph normalized data
-        par(mfrow = c(2, 2))
+        par(mfrow = c(2, 2), lwd = 2)
         for (i in seq_along(norms)) {
             d.method <- names(norms)[i]
             d.name <- deparse(substitute(array))

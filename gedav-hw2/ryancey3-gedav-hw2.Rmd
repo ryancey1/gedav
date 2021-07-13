@@ -3,10 +3,8 @@ title: "Homework 2"
 author: "Ryan Yancey"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output: 
-    html_document:
-        highlight: tango
-        theme: cosmo
-        keep_md: yes
+  pdf_document:
+      keep_tex: True
 colorlinks: yes
 ---
 
@@ -14,12 +12,16 @@ colorlinks: yes
 knitr::opts_chunk$set(
   echo = TRUE,
   fig.align = "center",
-  fig.width = 9,
-  fig.height = 8
+  dev = "jpeg",
+  dpi = 300
 )
 
-# clear out the environment
+# Clear out the environment
 rm(list = ls())
+
+# Clear out files generated in script
+system(command = "rm -rf data/gp")
+system(command = "rm -f data/out.fi")
 ```
 
 ------------------------------------------------------------------------
@@ -31,87 +33,363 @@ rm(list = ls())
 #### Obtaining adipose tissue samples are paramount to the understanding of human obesity. We have examined the impact of needle-aspirated and surgical biopsy techniques on the study of subcutaneous adipose tissue (scAT) gene expression in both obese and lean subjects. Biopsy sampling methods have a significant impact on data interpretation and revealed that gene expression profiles derived from surgical tissue biopsies better capture the significant changes in molecular pathways associated with obesity. We hypothesize that this is because needle biopsies do not aspirate the fibrotic fraction of scAT; which subsequently results in an under-representation of the inflammatory and metabolic changes that coincide with obesity. This analysis revealed that the biopsy technique influences the gene expression underlying the biological themes commonly discussed in obesity (e.g. inflammation, extracellular matrix, metabolism, etc), and is therefore a caveat to consider when designing microarray experiments. These results have crucial implications for the clinical and physiopathological understanding of human obesity and therapeutic approaches. We will be working with 4 lean subjects from which a needle biopsy was taken.
 
 ------------------------------------------------------------------------
+\newpage 
 
-#### **1.) First load the marray library, then load the 4 GenePix files, making sure to extract the foreground and background median values from the Cy5 and Cy3 channels.**
-
+#### **1.) First load the marray library, then load the 4 GenePix files, making sure to extract the foreground and background median values from the Cy5 and Cy3 channels.**  
+\ 
 ```{r load-marray}
 suppressPackageStartupMessages(library(marray))
 ```
-
+\ 
 First we need to decompress the `GSE12050_amend.zip` dataset downloaded into the "data" directory.
-
-```{r unzip and load}
+\ 
+```{r unzip-and-load, cache = TRUE}
 dir(path = "data")
 
-# unzip and gunzip the GSE files
-system(command = "unzip -o data/GSE12050_amend.zip -d data/gp; gunzip -q data/gp/*")
+# Unzip/gunzip the GSE files
+system("unzip -o data/GSE12050_amend.zip -d data/gp; gunzip -q data/gp/*")
 
-# load data
-data <- read.GenePix(path = "data/gp")
+# Move to folder containing .gpr files
+cwd <- getwd() # store root
+setwd("data/gp")
+
+# Load data into R
+data <- read.GenePix()
+
+# Move back to root
+setwd(cwd)
 ```
+\ 
+\newpage 
 
 #### **2.) Normalize each array using median global, loess, and print-tip-group loess methods. Then plot MvA plots of all 4 arrays comparing no normalization to the other 3 normalization approaches.**
-
-```{r norm-function, cache = TRUE}
-# define function to reduce redundancy
-norm_and_plot <- function(array) {
-    # named list of normalized data
-    norms <- list(
-        notNormalized = maNorm(array, norm = "n"),
-        medianNormalized = maNorm(array, norm = "m"),
-        loessNormalized = maNorm(array, norm = "l"),
-        printTipLoess = maNorm(array, norm = "p")
-    )
-    # graph normalized data
-    par(mfrow = c(2, 2))
-    for (i in seq_along(norms)) {
-        d.method <- names(norms)[i]
-        d.name <- deparse(substitute(array))
-        maPlot(m = norms[[i]],
-               lines.func = NULL,
-               legend.func = NULL,
-               main = paste(d.name, d.method, sep = ": "))
-    }
-}
-
-# run function on all arrays
-norm_and_plot(data[, 1])
-norm_and_plot(data[, 2])
-norm_and_plot(data[, 3])
-norm_and_plot(data[, 4])
+\ 
+```{r norm-function, cache=TRUE}
+# Source saved script (see function at end of document)
+source("scripts/norm_and_plot.R")
 ```
 
+```{r norm-plot-1, cache = TRUE}
+# Run function on array1
+norm_and_plot(data[, 1])
+```
+\ 
+\newpage 
+
+```{r norm-plot-2, cache = TRUE}
+# Run function on array2
+norm_and_plot(data[, 2])
+```
+\ 
+\newpage 
+
+```{r norm-plot-3, cache = TRUE}
+# Run function on array3
+norm_and_plot(data[, 3])
+```
+\ 
+\newpage 
+
+```{r norm-plot-4, cache = TRUE}
+# Run function on array4
+norm_and_plot(data[, 4])
+```
+\ 
+\newpage 
+
 #### **3.) Plot density plots of the log ratio values for each normalization (and pre normalization) for only array #4. Put them all on the same plot. Make sure to label the axes and provide a legend.**
+\ 
+```{r density-plots, cache = TRUE}
+# Save array4 normalized to variable
+array4 <- norm_and_plot(data[, 4], plot = FALSE)
+
+# Save density calculations
+d1 <- density(maM(array4[[1]]), na.rm = TRUE) # none
+d2 <- density(maM(array4[[2]]), na.rm = TRUE) # median
+d3 <- density(maM(array4[[3]]), na.rm = TRUE) # loess
+d4 <- density(maM(array4[[4]]), na.rm = TRUE) # printiploess
+
+# Plot ranges
+par(lwd = 3, font.lab = 2)
+plot(
+    x = range(d1$x, d2$x, d3$x, d4$x),
+    y = range(d1$y, d2$y, d3$y, d4$y),
+    type = "n",
+    ylab = "Density",
+    xlab = "Log-ratios",
+    main = "Density plot"
+)
+# Density plots
+lines(d1, col = "magenta")
+lines(d2, col = "cyan")
+lines(d3, col = "red")
+lines(d4, col = "green", lty = 3) # dotted overlapped easier to see
+legend(
+    "topright",
+    legend = labels(array4),
+    lty = c(1, 1, 1, 3), 
+    col = c("magenta", "cyan", "red", "green"),
+    inset = 0.02, cex = 0.7, text.font = 2
+)
+```
+\ 
 
 #### **4.) Based on the plots generated so far, which normalization do you think is most preferred for this dataset?**
+\ 
 
+For this data set, it appears either the "within-print-tip-group intensity dependent location normalization" (printTipLoess) or the "global intensity or A-dependent location normalization" (loess) methods work *equally* well.
+\ 
+
+\newpage 
 #### **5.) Research has demonstrated that often a single channel, background subtracted provides as good a normalization as using both channels. To test this, we will be utilizing the fact that these 4 samples are replicates and calculate the correlation between them. So, first extract the Cy5 foreground and background values for each of the 4 arrays and subtract the background from the foreground values, then log2 transform these values. Then calculate global median normalization on these 4 arrays using these background subtracted Cy5 values. Hint, you need to use the median of each array to scale, such that after normalization, all arrays will have a median of 1.**
+\ 
+```{r red-channel-normalization, warning=FALSE, cache=TRUE}
+Rf <- maRf(data) # Cy5 fg
+Rb <- maRb(data) # Cy5 bg
+
+# Subtract bg from fg
+R <- Rf - Rb 
+
+# Log2 transform
+log2R <- log2(R)
+
+# Calculate c = log2(k)
+c <- apply(log2R, 2, median, na.rm = TRUE)
+
+# Subtract the vector from each row
+mnorm.log2R <- t(apply(log2R, 1, function(x) x - c))
+
+# Verify the median is log2(1) = 0
+apply(mnorm.log2R, 2, median, na.rm = TRUE)
+```
+\ 
+\newpage 
 
 #### **6.) Next calculate a Spearman’s rank correlation between all 4 arrays that you normalized in #5 and do the same with the M values from loess normalized data that you generated in #2. Plot a scatter plot matrix for each of the two normalizations (pairs() function), and be sure to label the arrays and title the plot. Print the correlation coefficients to the screen.**
+\ 
+```{r mnorm.log2R-corr, cache=TRUE}
+# Single channel median norm correlation
+corr.mnorm <- round(cor(mnorm.log2R,
+                   use = "complete.obs",
+                   method = "spearman"), 3)
+pairs(
+  x = corr.mnorm,
+  las = 2, pch = 19,
+  upper.panel = NULL,
+  col = "green",
+  main = "Single Channel, Global Median Normalized"
+)
+```
+\newpage 
+```{r lnorm.log2R-corr, cache=TRUE}
+# Two channel loess norm correlation
+lnorm.log2R <- maM(maNorm(data, norm = "loess"))
+corr.loess <- round(cor(lnorm.log2R,
+                   use = "complete.obs",
+                   method = "spearman"), 3)
+pairs(
+  x = corr.loess,
+  las = 2, pch = 19,
+  labels = gsub(pattern = "data.gp.", replacement = "", colnames(corr.loess)),
+  upper.panel = NULL,
+  col = "red",
+  main = "Two Channel, Loess Normalized"
+)
+```
+\newpage 
+```{r print-corr}
+# Print correlation coefficients
+corr.mnorm
+corr.loess
+```
+\ 
+\newpage 
 
 #### **7.) Now we want to compare these normalizations to quantile normalized data to see if we gain anything by leveraging the distributions across all 4 arrays. Carry out the steps in the lecture or use the paper from Bolstad et al. entitled: “A comparison of normalization methods for high density oligonucleotide array data based on variance and bias” (on the course website), but we are only going to conduct this on the Cy5 channel. The basic steps are as follows (these 6 steps are calculated on non-logged data; the data is logged after these steps are carried out):**
+\ 
+```{r quantile-normalize}
+# 1. Subtract the foreground – background for each of the 4 chips for only the
+# Cy5 channel. This should all be on the linear or raw scale (no logging yet).
+dat <- data.frame(maRf(data) - maRb(data))
 
-1. Subtract the foreground – background for each of the 4 chips for only the Cy5 channel. This should all be on the linear or raw scale (no logging yet).
+# 2. Sort each column independently in this new matrix
+dat_sorted <- data.frame(apply(dat, 2, sort))
 
-2. Sort each column independently in this new matrix
+# 3. Calculate row means for the sorted matrix
+dat_sorted_mean <- apply(dat_sorted, 1, mean)
 
-3. Calculate row means for the sorted matrix
+# 4. Create a new matrix with each row having the same values as the sorted row
+# mean vectors from step #3 (you should have a new R matrix)
+mean_matrix <- matrix(
+    dat_sorted_mean,
+    nrow = length(dat_sorted_mean),
+    ncol = 4,
+    byrow = FALSE
+)
 
-4. Create a new matrix with each row having the same values as the sorted row mean vectors from step #3 (you should have a new R matrix)
+# 5. Rank the columns independently on the original background subtracted matrix
+# (from step #1) Hint: use the `rank()` function with the argument
+# `ties=”first”` or `order()`
+dat_ranked <- apply(dat, 2, rank, ties.method = "first")
 
-5. Rank the columns independently on the original background subtracted matrix (from step #1) Hint: use the `rank()` function with the argument `ties=”first”` or `order()`
-
-6. Reorder the columns in the new matrix from step #4 using the ranks from step #5
-
+# 6. Reorder the columns in the new matrix from step #4 using the ranks from
+# step #5
+quant_norm <- apply(dat_ranked, 2, function (x) dat_sorted_mean[x])
+```
+\ 
 **To verify that each array has the same distribution, use the `hist()` function to look at various arrays (e.g., `hist(c5.norm[,1])`; `hist(c5.norm[,2])`; etc.). Slight differences in distributions are a result of the ties in the ranking.**
+\ 
+```{r verif, warning=FALSE, fig.height=8}
+# Graph parameters
+par(mfrow = c(2,2))
+cols = c("salmon", "lightgreen", "lightblue", "mediumpurple1")
+
+# Plot each as log-transformed (data is skewed left)
+for (i in seq_len(ncol(quant_norm))) {
+  hist(x=log2(quant_norm[,i]), breaks=30,
+       xlab = bquote(log[2]~(dat[norm]) ~ Array ~ .(i)),
+       main = bquote("Histogram:\nQuantile Normalized Array" ~ .(i)),
+       col = cols[i])
+  box()
+}
+```
+\ 
+\newpage 
 
 #### **8.) Now log (base 2) the new R matrix you created from step 6 (question #7) and calculate a Spearman’s rank correlation between the 4 arrays and plot a scatter plot matrix as you did before. Print the correlation coefficients to the screen.**
+\ 
+```{r log-norm, warning=FALSE}
+# Log2 transform the data
+qnorm.log2R <- data.frame(log2(quant_norm))
+
+# Calculate Spearman’s rank correlation
+corr.lqn <-
+    round(cor(qnorm.log2R, method = "spearman", use = "complete.obs"), 3)
+
+# Scatter plot matrix
+pairs(
+  x = corr.lqn,
+  las = 2, pch = 19,
+  labels = gsub(pattern = "data.gp.", replacement = "", colnames(corr.lqn)),
+  upper.panel = NULL,
+  col = "red",
+  main = "Red Channel, Quantile Normalized"
+)
+```
+\newpage 
+```{r corr-coef}
+# Print correlation coefficients
+corr.lqn
+```
 
 #### **9.) Of the 4 normalization methods, which do you suggest as optimal and why?**
+\ 
+
+For comparing replicates of the **same sample type**, like what we use in this homework (we are working with the *lean* tissue, not comparing lean to obese), I believe using **quantile normalization** is the most effective at obtaining more "true" intensity values. Quantile normalization corrects for technical artifacts that have nothing to do with biology. Since we can assume the distribution of the lean patient data is somewhat similar, quantile normalization is a good method. **However, if we were to include obese patients with this data, then we would need to re-evaluate the method of normalization before moving forward with analysis.**
+\ 
 
 #### **10.) Now we want to work with a qRT-PCR dataset from patients with an inflammatory disease. The genes measured for this experiment included a set of proinflammatory chemokines and cytokines that are related to the disease. Download the raw qRT-PCR file called Inflammation_qRT-PCR.csv. Then change the normalization script from the lecture notes to include the housekeeping genes beta actin, GAPDH, and 18S. Look at the file to make sure the housekeepers are spelled correctly. Run the normalization script and output a data matrix of fold change values.**
+\ 
+```{r qRT-PCR, results='hide'}
+# Source saved script (see function at end of document)
+source("scripts/f.parse.R")
+
+# Set arguments 
+pa <- "data/"
+fi <- "Inflammation_qRT-PCR.csv"
+out.fi <- "out.fi"
+
+# Run loaded function
+f.parse(pa, fi, out.fi)
+```
+\ 
+\newpage 
 
 #### **11.) Read the normalized qRT-PCR data matrix into R, using a Spearman’s rank correlation, which two patients are most correlated? Plot these two patients against each other in a scatter plot.**
+\ 
+```{r final-chunk, warning=FALSE}
+# Read data into R, transpose to make patients as columns
+norm.dat <- read.table("data/out.fi",
+                       header = TRUE,
+                       row.names = 1,
+                       sep = "\t")
+
+# Correlation of quantile normalized qRT-PCR data
+# Cut out column with no variation (Fold change = 1)
+corr.norm.dat <-
+        round(cor(
+            t(norm.dat)[, -(1)], method = "spearman", use = "complete.obs"
+        ), 3)
+
+# Source saved script (see function at end of document)
+source("scripts/px.R")
+
+# Pairs plot
+pairs(corr.norm.dat,
+      upper.panel = NULL,
+      col = "darkgreen",
+      pch = 19, panel = px,
+      main = "Correlation Matrix: All patients")
+```
+\newpage
+```{r print-matrix}
+# Print correlation matrix
+corr.norm.dat
+```
+\ 
+There's a lot of data on this chart. To quickly find the pair with the highest correlation, we grab the second maximum value out of *each* column in the correlation matrix (since the first maximum will be 1), then sort the resulting vector and note the top two from there. See below.
+\ 
+```{r find max}
+# First sort matrix by column and grab the 2nd max value from each column
+max_corr <- apply(corr.norm.dat, 2, function (x) sort(x, decreasing = TRUE)[2])
+
+# Then, sort the vector from before and note the first two (x & y)
+sort(max_corr, decreasing = TRUE)[1:2]
+```
+\ 
+It appears that **patient 434_3** and patient **434_8** are *most* correlated.
+\ 
+```{r plot-patients}
+par(lwd = 2, font = 2)
+plot(
+  corr.norm.dat["434_8", ] ~ corr.norm.dat["434_3", ],
+  xlab = "Patient 434_3",
+  ylab = "Patient 434_8",
+  pch = 19, col = "darkgreen",
+  main = "Scatterplot: Patient 434_8 vs. Patient 434_3",
+  font = 2, lwd = 2
+)
+
+# Linear model
+lm <- lm(corr.norm.dat["434_8",] ~ corr.norm.dat["434_3",])
+abline(lm, col = "red")
+lab <- parse(text = sprintf('R^2 == %s', round(summary(lm)$r.squared, 3)))
+legend(
+  "bottomright",
+  legend = c("Linear model", lab),
+  col = c("red", NULL),
+  lty = c(1, 0),
+  inset = 0.02
+)
+```
+\newpage 
+# Functions sourced
+\ 
+```{r show functions}
+# Function which normalizes and plots MvA for an array
+norm_and_plot
+
+# Function used to get fold change of qRT-PCR data
+f.parse
+
+# Function used in panel plot matrix
+px
+```
+\newpage 
+# Session Info
+\ 
+```{r session-info}
+sessionInfo()
+```
 
 [1]: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE12050
-
