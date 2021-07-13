@@ -5,3 +5,4 @@
 */data/*
 */*_files/figure-latex
 !*.zip
+!*.csv
