@@ -80,9 +80,3 @@ f.parse <- function(path = pa,
         col.names = F
     )
 }
-
-pa <- "data/"
-fi <- "qRT-PCR.csv"
-out.fi <- "out.fi"
-
-f.parse(pa, fi, out.fi)
