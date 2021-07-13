@@ -3,8 +3,7 @@ title: "Homework 2"
 author: "Ryan Yancey"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output: 
-  pdf_document:
-      keep_tex: True
+  pdf_document
 colorlinks: yes
 ---
 
@@ -348,9 +347,13 @@ sort(max_corr, decreasing = TRUE)[1:2]
 ```
 \ 
 It appears that **patient 434_3** and patient **434_8** are *most* correlated.
-\ 
+\newpage 
+
 ```{r plot-patients}
+# Graph parameters
 par(lwd = 2, font = 2)
+
+# Plot two patients in scatterplot
 plot(
   corr.norm.dat["434_8", ] ~ corr.norm.dat["434_3", ],
   xlab = "Patient 434_3",
@@ -360,7 +363,7 @@ plot(
   font = 2, lwd = 2
 )
 
-# Linear model
+# Fit a linear model and add trendline
 lm <- lm(corr.norm.dat["434_8",] ~ corr.norm.dat["434_3",])
 abline(lm, col = "red")
 lab <- parse(text = sprintf('R^2 == %s', round(summary(lm)$r.squared, 3)))
