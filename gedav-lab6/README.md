@@ -1,22 +1,9 @@
----
-title: "Lab 6 - Multiple Testing & Survival Analysis"
-author: "Ryan Yancey"
-date: "22 July 2021"
-output:
-  html_document: 
-    df_print: default
-    highlight: tango
-    theme: cosmo
-    keep_md: yes
-  pdf_document:
-    highlight: tango
-    latex_engine: xelatex
-colorlinks: yes
----
+
+# Lab 6 - Multiple Testing & Survival Analysis
+## author: "Ryan Yancey"
+## date: "22 July 2021"
 
 ------------------------------------------------------------------------
-
-
 
 #### In this lab, we will be working with an Affymetrix data set that was run on the human HGU95A array. This experiment was designed to assess the gene expression events in the frontal cortex due to aging. A total of 18 male and 12 female postmortem brain samples were obtained to assess this.
 
@@ -35,6 +22,8 @@ suppressPackageStartupMessages(library(multtest))
 suppressPackageStartupMessages(library(survival))
 ```
 
+------------------------------------------------------------------------
+
 #### 1.) Download the GEO Brain Aging study from the class website. Also obtain the annotation file for this data frame.
  
 
@@ -49,6 +38,8 @@ dir("./data")
 ## [7] "tcga_brca_fpkm.txt"            "tcga_brca_fpkm.zip"
 ```
 
+------------------------------------------------------------------------
+
 #### 2.) Load into R, using `read.table()` function and the `header=T`, `row.names=1` arguments for each data file.
  
 
@@ -62,6 +53,8 @@ brain.ann <- read.table(file = "data/agingStudy1FCortexAffyAnn.txt",
                         row.names = 1)
 ```
 
+------------------------------------------------------------------------
+
 #### 3.) Prepare 2 separate vectors for comparison. The first is a comparison between male and female patients. The current data frame can be left alone for this, since the males and females are all grouped together. The second vector is comparison between patients >= 50 years of age and those < 50 years of age.
 
 #### To do this, you must use the annotation file and logical operators to isolate the correct arrays/samples.
@@ -74,6 +67,8 @@ male <- brain.ann$Gender == "M"
 # Vector of patients >= 50 y.o.
 over50 <- brain.ann$Age >= 50
 ```
+
+------------------------------------------------------------------------
 
 #### 4.) Run the t.test function from the notes using the first gene vector below for the gender comparison. Then use the second gene vector below for the age comparison. Using these p-values, use either p.adjust in the base library or mt.rawp2adjp in the multtest library to adjust the values for multiple corrections with the Holm's method.
  
@@ -96,6 +91,8 @@ rawp_age <- apply(brain.dat[g.a, ], 1, t.test.all.genes, over50, !over50)
 mt.gend <- mt.rawp2adjp(rawp_gend, proc = "Holm")
 mt.age <- mt.rawp2adjp(rawp_age, proc = "Holm")
 ```
+
+------------------------------------------------------------------------
 
 #### 5.) Sort the adjusted p-values and non-adjusted p-values and plot them vs. the x-axis of numbers for each comparison data set. Make sure that the two lines are different colors. Also make sure that the p-values are sorted before plotting.
  
@@ -135,6 +132,8 @@ mt.plot(
 <img src="ryancey3-gedav-lab6_files/figure-html/mt.plot1-gender-2.png" style="display: block; margin: auto;" />
 
 **Clearly, the threshold for hypothesis rejection by the Holm adjustment demonstrates that more false positives were present in the *gender* subset than in the *age* subset. This seems logical, too. Differences in the frontal cortex of patients are most likely to arise as a result of age rather than gender, so we are more likely to see false positives in the "significant" set of genes found in the gender set.**
+
+------------------------------------------------------------------------
 
 #### 6.) Repeat #4 and #5 with the Bonferroni method.
 
@@ -179,6 +178,8 @@ mt.plot(
 
 **The same trend holds for the Bonferroni adjustment, though it is much more stringent compared to the Holm adjustment.**
 
+------------------------------------------------------------------------
+
 #### For the second part of this lab, you will be working with RNA-sequencing data from The Cancer Genome Atlas (TCGA), specifically a breast invasive carcinoma dataset of 119 patient tumors. The data matrix and annotation files are on the course website. We will be trying to confirm an observation from a meta-analysis performed by Mehra et al, 2005 in Cancer Research. The authors identified the gene (using arrays) and protein (using immunohistochemistry) GATA3 as a prognostic factor in breast cancer, where patients with low expression of GATA3 experienced overall worse survival. The PubMed abstract is here:
 
 > GATA binding protein 3 (GATA3) is a transcriptional activator highly expressed by the luminal epithelial cells in the breast. Here we did a meta-analysis of the available breast cancer cDNA data sets on a cohort of 305 patients and found that GATA3 was one of the top genes with low expression in invasive carcinomas with poor clinical outcome. To validate its prognostic utility, we did a tissue microarray analysis on a cohort of 139 consecutive invasive carcinomas (n = 417 tissue samples) immunostained with a monoclonal antibody against GATA3. Low GATA3 expression was associated with higher histologic grade (P < 0.001), positive nodes (P = 0.002), larger tumor size (P = 0.03), negative estrogen receptor and progesterone receptor (P < 0.001 for both), and HER2-neu overexpression (P = 0.03). Patients whose tumors expressed low GATA3 had significantly shorter overall and disease-free survival when compared with those whose tumors had high GATA3 levels. The hazard ratio of metastasis or recurrence according to the GATA3 status was 0.31 (95% confidence interval, 0.13-0.74; P = 0.009). Cox multivariate analysis showed that GATA3 had independent prognostic significance above and beyond conventional variables. Our data suggest that immunohistochemical analysis of GATA3 may be the basis for a new clinically applicable test to predict tumor recurrence early in the progression of breast cancer. ([source](http://www.ncbi.nlm.nih.gov/pubmed/16357129))
@@ -200,6 +201,8 @@ tcga.ann <- read.table(file = "data/tcga_brca_fpkm_sam.txt",
                        sep = "\t")
 ```
 
+------------------------------------------------------------------------
+
 #### 8.) Use `grep` to subset the data matrix only by gene ‘GATA3’ and make sure to cast this vector to numeric.
 
 
@@ -207,6 +210,8 @@ tcga.ann <- read.table(file = "data/tcga_brca_fpkm_sam.txt",
 gata3 <- grep("GATA3", rownames(tcga.dat))
 tcga.dat.gata3 <- as.numeric(tcga.dat[gata3, ])
 ```
+
+------------------------------------------------------------------------
 
 #### 9.) Create a binary (1/0) vector for the patients where the upper 25% expression of GATA3 is coded as 1 and all other patients are coded as 0. Call this new variable `group`.
 
@@ -221,12 +226,16 @@ status <- as.numeric(tcga.ann$vital_status == "DECEASED")
 group <- as.numeric(tcga.dat.gata3 >= upper25th)
 ```
 
+------------------------------------------------------------------------
+
 #### 10.) Create a data matrix with the `group` variable you created in #9 and the remaining variables in the annotation file.
 
 
 ```r
 ann.dm <- data.frame(time, status, group)
 ```
+
+------------------------------------------------------------------------
 
 #### 11.) Run a Kaplan-Meier (KM) analysis to determine if a difference in survival experience exists between the two GATA3 expression groups using the survdiff function. Extract the p-value from the chi squared test output.
 
@@ -253,6 +262,8 @@ surv <- with(ann.dm, Surv(time, status))
 # Extract p-value from chi-squared
 pval_km <- signif(pchisq(sdf$chisq, length(sdf$n) - 1, lower.tail = FALSE), 4)
 ```
+
+------------------------------------------------------------------------
 
 #### 12.) Now run a Cox proportion hazard (PH) regression model on just the grouping variable (i.e. no other covariates) and extract both the p-value and hazard ratio from the output.
 
@@ -288,6 +299,8 @@ summary(cph)
 pval_cox <- signif(summary(cph)$coefficients[5], 4)
 HR_cox <- signif(summary(cph)$coefficients[2], 4)
 ```
+
+------------------------------------------------------------------------
 
 #### 13.) Run the `survfit()` function only on the grouping variable (i.e. no other covariates) and plot the KM curves, being sure to label the two groups with a legend, two different colors for each line, and provide the KM p-value, Cox PH p-value, Cox PH hazard ratio, and sample sizes all in each of the two groups all on the plot.
 
@@ -337,9 +350,13 @@ legend(
 
 <img src="ryancey3-gedav-lab6_files/figure-html/surv-plot-1.png" style="display: block; margin: auto;" />
 
+------------------------------------------------------------------------
+
 #### 14.) Does this result agree with the *Mehra et al*, study result?
 
 Yes, this does agree with the result in the *Mehra et al* study. Although the p-value doesn't indicate significance, there is a general trend that patients with higher GATA3 expression levels have favorable survival. In fact, these patients are approximately 40% as likely to die from their breast cancer (HR = 0.4266).
+
+------------------------------------------------------------------------
 
 # Function sourced
   
@@ -362,6 +379,8 @@ t.test.all.genes
 ## }
 ## <bytecode: 0x7f8981d89ed0>
 ```
+
+------------------------------------------------------------------------
 
 # Session info
   
