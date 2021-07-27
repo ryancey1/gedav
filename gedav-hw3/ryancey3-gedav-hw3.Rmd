@@ -1,0 +1,197 @@
+---
+title: "Homework 3"
+author: "Ryan Yancey"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  pdf_document: 
+    highlight: tango
+colorlinks: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  dev = "jpeg",
+  dpi = 300
+)
+
+rm(list = ls())
+```
+
+------------------------------------------------------------------------
+
+#### 1.) Load the golub data training set in the multtest library. Also load Biobase and annotate libraries, if they are not loaded with the multtest library. Remember that the golub data training set is in the multtest library, so see the help file for information on this data set. 
+\ 
+```{r number1, results='hide'}
+# Load in local scripts
+source("scripts/quiet_load.R")
+source("scripts/t.test.all.genes.R")
+source("scripts/wilcox.test.all.genes.R")
+
+# Attach libraries quietly
+libs <- c("multtest", "Biobase", "annotate", "limma")
+sapply(libs, quiet_load)
+
+# Import Golub et al. 1999 dataset
+data(golub)
+```
+
+#### 2.) Cast the matrix to a data frame and label the gene names as numbers (e.g. “g1”,”g2”,etc).
+\ 
+```{r number2}
+# Cast golub matrix to data frame
+df.golub <- data.frame(golub)
+
+# Set rownames to f(row) = "g.row"
+rownames(df.golub) <- paste0("g.", rownames(df.golub))
+```
+
+#### 3.) Get the sample labels (see lecture notes) and set the sample labels to the data frame.
+\ 
+```{r number3}
+# Set colnames to "ALL" or "AML" based on golub.cl tumor class vector
+colnames(df.golub) <- ifelse(golub.cl == 0, "ALL", "AML")
+```
+
+\newpage 
+#### 4.) Use the t-test function in the lecture #7 notes and modify it to `wilcox.test` instead of `t.test`. Change the `$p.value` argument to `$statistic`. Assign the following arguments to the function: `exact = FALSE`, `alternative = "two.sided"`, `correct = TRUE`. Run the function on all of the genes in the dataset and save it as `original.wmw.run`.
+\ 
+```{r number4}
+# Logical vector of ALL samples
+ALL.sample <- colnames(df.golub) == "ALL"
+
+# Run function and separate df.golub rows by s1=ALL vs s2=AML
+original.wmw.run <- apply(df.golub,
+                          1,
+                          wilcox.test.all.genes,
+                          s1 = ALL.sample,
+                          s2 = !ALL.sample)
+```
+
+#### 5.) Now write a for loop to iterate 500 times, where in each iteration, the columns of the data frame are shuffled (class labels mixed up), the WMW test is calculated on all of the genes, and the maximum test statistic (W) is saved in a list.
+\ 
+```{r number5, cache = TRUE}
+# Initialize an empty vector to store max test stats
+W <- c()
+
+# Loop 500 times
+for (i in 1:500) {
+  shuffled_cols <- sample(ncol(df.golub)) # shuffle columns
+  df.golub.mix <- df.golub[, shuffled_cols] # reorder data frame
+  # run wilcox test on all genes
+  tmp.wmw.run <- apply(df.golub.mix,
+                       1,
+                       wilcox.test.all.genes,
+                       s1 = ALL.sample,
+                       s2 = !ALL.sample)
+  # append to list
+  W <- c(W, max(tmp.wmw.run))
+}
+```
+
+\newpage 
+#### 6.) Once you have the list of maximum test statistics, get the 95% value test statistic. Subset the original.wmw.run list of values with only those that have a higher test statistic than the 95% value that you calculated. Print the gene names and test statistics out.
+\ 
+```{r number6}
+# 95% value statistic
+x <- quantile(W, probs = 0.95)
+
+# Top genes
+(subset.original.wmw.run <- original.wmw.run[original.wmw.run > x])
+```
+
+\newpage 
+#### 7.) Now we want to compare these results to those using the empirical Bayes method in the `limma` package. Load this library and calculate p-values for the same dataset using the `eBayes()` function.
+\ 
+```{r number7}
+# Design (1 = ALL, 0 = AML)
+design <- cbind(Grp1 = 1, Grp2vs1 = c(rep(1, sum(ALL.sample)), rep(0, sum(!ALL.sample))))
+
+# Empirical Bayes and extract p-values
+fit <- lmFit(df.golub, design)
+fit <- eBayes(fit)$p.value[,2]
+```
+
+#### 8.) Sort the empirical Bayes p-values and acquire the lowest *n* p-values, where *n* is defined as the number of significant test statistics that you found in problem 6. Intersect the gene names for your two methods and report how many are in common between the two differential expression methods, when choosing the top *n* genes from each set.
+\ 
+```{r number8}
+# Sort descending
+sorted.fit <- sort(fit)
+n <- length(subset.original.wmw.run)
+
+# Lowest n p-values
+lowest.pvals <- sorted.fit[1:n]
+
+# Which ones intersect with the original list
+(i <- intersect(names(subset.original.wmw.run), names(lowest.pvals)))
+```
+
+**The two differential expression methods found `r length(i)` (`r round((length(i)/n) * 100, 2)`%) significant genes in common.**
+
+\newpage 
+#### 9.) Finally, compare the results from a Student’s t-test with the empirical Bayes method. To do this, first calculate a two sample (two-tailed) Student’s t-test on all genes. Make sure that you are running a Student’s t-test and not a Welch’s t-test. Then extract only those genes with a p-value less than 0.01 from this test. Plot the gene p-values < 0.01 for the Student’s t-test vs. the same genes in the empirical Bayes method. Make sure to label the axes and title appropriately.
+\ 
+```{r number9, fig.height=6}
+# Two-tailed t-test
+t.test.run <- apply(df.golub,
+                    1,
+                    t.test.all.genes,
+                    s1 = ALL.sample,
+                    s2 = !ALL.sample)
+
+# Extract those with p-values less than 0.01
+t.test.run <- t.test.run[t.test.run < 0.01]
+
+# Extract the same genes from eBayes fit
+lowest.pvals <- fit[names(t.test.run)]
+
+# Student's t-test vs Empirical Bayes
+plot(
+  t.test.run ~ lowest.pvals,
+  xlab = "empirical Bayes",
+  xlim = c(0, 0.02),
+  ylab = "Student's t-test",
+  ylim = c(0, 0.02),
+  main = "P-value distribution comparison with Golub et al. 1999 data",
+  cex = 0.5,
+  col = "lightblue",
+  pch = 15
+)
+
+# Add linear model line
+lm <- lm(t.test.run ~ lowest.pvals)
+abline(lm, col = "red", lty = 2) # plot linear model
+
+# Add legend to plot
+rsquared <- round(summary(lm)$r.squared, 3)
+lab1 <- parse(text = sprintf('R^2 == %s', rsquared))
+legend(
+  "bottomright",
+  legend = c("Linear model", lab1),
+  col = c("red", NULL),
+  lty = c(2, 0),
+  inset = 0.02
+)
+```
+
+**From this plot, one can determine the two significance testing methods are strongly correlated, as a linear model accounts for `r round(summary(lm)$r.squared * 100, 1)`% of the variation between the two sets.**
+
+\newpage 
+## Source any scripts imported below
+
+```{r source-scripts}
+# quiet_load() attaches libraries without messages output (quietly)
+quiet_load
+# wilcox.test.all.genes() computes the Wilcoxon-Mann-Whitney test for each gene 
+wilcox.test.all.genes
+# t.test.test.all.genes() computes the Student's t-test for each gene 
+t.test.all.genes
+```
+
+\newpage 
+## Session info
+
+```{r session-info}
+sessionInfo()
+```
