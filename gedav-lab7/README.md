@@ -32,7 +32,6 @@ source("scripts/k.speClust2.R")
 ```
 
 
-\newpage
 **1.) Load the *Sotiriou* breast cancer data set from the class website as well as the annotation file.**
 
 
@@ -77,7 +76,6 @@ str(ann)
 ##  $ time.dmfs  : num  6.247 7.329 1.167 0.499 3.082 ...
 ```
 
-\newpage
 **2.) Calculate and plot a PCA plot. Label the points based on the site (“site” column header in annotation file). Make sure to add a legend to denote the colors of the two sites.**
 
 
@@ -106,7 +104,6 @@ legend(
 <img src="ryancey3-gedav-lab7_files/figure-html/number2-1.png" style="display: block; margin: auto;" />
 
 
-\newpage
 **3.) Calculate and plot the scree plot that corresponds to the PCA from question #2. Using only the first two eigenvalues, approximately how much variability in the data is explained?**
 
 
@@ -141,7 +138,6 @@ first2eigenvalues <- sum(dat.pca.scree[1:2])
 
 The first two eigenvalues explain **57.21%** of the variance in this data.
 
-\newpage
 **4.) Now calculate and plot 2 different MDS plots: 1) classic MDS and 2) nonmetric MDS. Label the points based on the site. Make sure to load the MASS library for the nonmetric MDS plot function. Also add a legend to both plots.**
 
 
@@ -173,7 +169,6 @@ legend("bottomleft", legend = levels(ann$site),
 
 <img src="ryancey3-gedav-lab7_files/figure-html/number4-1.png" style="display: block; margin: auto;" />
 
-\newpage
 **5.) Now, first center and scale the rows of the matrix with the commands below (assuming that dd is your data matrix):**
 
 
@@ -204,7 +199,6 @@ legend(
 
 <img src="ryancey3-gedav-lab7_files/figure-html/number5-1.png" style="display: block; margin: auto;" />
 
-\newpage
 ## Sourced scripts
 
 
@@ -244,7 +238,6 @@ k.speClust2
 ## <bytecode: 0x7fc26cc3bb10>
 ```
 
-\newpage
 ## Session info
 
 
