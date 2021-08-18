@@ -1,0 +1,159 @@
+---
+title: "Lab 8 - Cluster Analysis"
+author: "Ryan Yancey"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  pdf_document: 
+    highlight: tango
+    latex_engine: xelatex
+colorlinks: yes
+---
+
+------------------------------------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  dev = "jpeg",
+  dpi = 300
+)
+
+rm(list = ls())
+```
+
+#### In this lab, you will be working with an R data set that was run on the Affymetrix human HGU95Av2 array. The microarray data are from genomic primary fibroblast cell lines and were generated for 46 samples: 23 human (*Homo sapien*), 11 bonobo (*Pan paniscus*), and 12 gorilla (*Gorilla gorilla*) donors. This is a publicly available dataset within the `fibroEset` package in R. It should be noted that two identical human donor arrays are in this dataset. This data set is good for clustering and classification problems since there is a large difference in transcript profiles between all 3 species.
+
+#### The analysis that you will conduct is based on clustering methods. The first problems require hierarchical clustering, while the last problems use spectral k-means clustering. We denote this as ‘spectral’ because instead of using the genes/probes as input into the clustering algorithm like the hierarchical clustering method, some form of spectral decomposition (e.g. PCA) is first computed and these eigenfunctions are used in the clustering algorithm. This method can be more useful than using the genes/probes in some cases where the variability is best summarized in a few components (or eigenfunctions).
+
+------------------------------------------------------------------------
+
+
+**1.) Load the `fibroEset` library and data set. Obtain the classifications for the samples.**
+
+
+```{r question1}
+# Load necessary packages, quietly
+suppressPackageStartupMessages(library(fibroEset))
+suppressPackageStartupMessages(library(dendextend))
+suppressPackageStartupMessages(library(gplots))
+data("fibroEset")
+
+# Extract necessary info
+dat <- as.data.frame(exprs(fibroEset))
+ann <- as.data.frame(pData(fibroEset))
+
+# Add factor for long names for easy human reading
+ann$species_long <- ann$species %>%
+  factor(levels = c("b", "g", "h"), labels = c("Bonobo", "Gorilla", "Human"))
+
+# Make sure columns are in the right order
+dat <- dat[,ann$samp]
+
+# Make columns human readable
+colnames(dat) <- ann$species_long
+```
+
+\newpage 
+**2.) Select a random set of 50 genes from the data frame, and subset the data frame.**
+
+
+```{r question2}
+# Set seed for reproducibility
+set.seed(11)
+
+# Sample 50 rows (genes)
+random_set <- sample(nrow(dat), 50)
+subset.dat <- dat[random_set, ]
+
+# Make data similar in scale
+subset.dat <- t(scale(t(subset.dat)))
+```
+
+\newpage 
+**3.) Run and plot hierarchical clustering of the samples using manhattan distance metric and median linkage method. Make sure that the sample classification labels are along the x-axis. Title the plot.**
+
+
+```{r question3}
+# Distance and cluster
+dist <- dist(t(subset.dat), method = "manhattan")
+hclust.dat <- hclust(dist, method = "median")
+
+# Set label colors based on species
+label_cols <- c("green3", "blue", "red")[ann$species_long]
+
+# Dendrogram and plot
+hclust.dat %>% 
+  as.dendrogram %>%
+  rank_branches(.) %>%
+  set("labels_color", label_cols[order.dendrogram(.)]) %>%
+  plot(main = paste("Heirarchical Clustering", 
+                    "50 random fibroEset genes",
+                    "(Manhattan distance, median linkage)", sep = "\n"))
+```
+
+\newpage 
+**4.) Now both run hierarchical clustering and plot the results in two dimensions (on samples and genes). Plot a heatmap with the genes on the y-axis and samples on the x-axis. Once again, make sure that the sample and genes labels are present. Title the plot.**
+
+
+```{r question4}
+# Heatmap colors
+heat_colors <- colorRampPalette(c("green", "black", "red"))(50)
+
+# A more involved heatmap plot
+heatmap.2(as.matrix(subset.dat),
+        main = paste("Distance heatmap\n50 fibroEset genes"),
+        colCol = label_cols,
+        density.info = "none",
+        col = heat_colors,
+        trace = "none",
+        key.xlab = "Scaled Expression")
+```
+
+\newpage 
+**5.) Calculate PCA on the samples and retain the first two components vectors (eigenfunctions). Calculate *k-means* clustering on these first two components with `k=3`.**
+
+
+```{r question5}
+# Calculate PCA, extract first 2 eigenvectors
+pca <- prcomp(subset.dat)
+pcs <- pca$x[,1:2]
+
+# K-means clustering on these two components
+km <- kmeans(pcs, centers = 3, iter.max = 20)
+
+# Basic stats on PCA eigenvectors
+summary(pca)[["importance"]][, 1:2]
+```
+
+\newpage 
+**6.) Plot a two-dimensional scatter plot of the sample classification labels, embedded with the first two eigenfunctions (from PCA). Color the labels with the color that corresponds to the predicted cluster membership. Make sure to label the axes and title the plot.**
+
+
+```{r question6}
+# Proportion of variance
+pct_var <- round(100*apply(pca$x, 2, var)/sum(apply(pca$x, 2, var)), 1)
+
+# Plot PCA
+plot(pcs[,2] ~ pcs[,1],
+     type = "n",
+     xlab = paste0("PC1 - ", pct_var[1], "%"), 
+     ylab = paste0("PC2 - ", pct_var[2], "%"),
+     main = "PCA Biplot (PCs 1 & 2)\nStratified by cluster membership")
+text(pcs[,2] ~ pcs[,1],
+     labels = levels(ann$species_long),
+     col = c("green4", "red3", "yellow4")[km$cluster])
+legend("topright", 
+       legend = c("Cluster 1", "Cluster 2", "Cluster 3"),
+       text.col = c("green4", "red3", "yellow4"),
+       inset = 0.02,
+       text.font = 2)
+```
+
+\newpage 
+
+## Session info
+
+```{r session-info}
+sessionInfo()
+```
